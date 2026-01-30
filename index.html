@@ -1,0 +1,1782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEET/JEE PDF Organizer</title>
+    <style>
+        :root {
+            --color-bg-base: #0f172a;
+            --color-bg-elevated: #1e293b;
+            --color-bg-surface: #334155;
+            --color-text-primary: #f1f5f9;
+            --color-text-secondary: #cbd5e1;
+            --color-text-muted: #94a3b8;
+            --color-primary: #38bdf8;
+            --color-primary-hover: #0ea5e9;
+            --color-border: rgba(148, 163, 184, 0.2);
+            --color-success: #22c55e;
+            --color-danger: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--color-bg-base);
+            color: var(--color-text-primary);
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--color-bg-elevated);
+            border-right: 1px solid var(--color-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .sidebar-header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-header p {
+            font-size: 13px;
+            color: var(--color-text-muted);
+        }
+
+        .search-box {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--color-bg-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            color: var(--color-text-primary);
+            font-size: 14px;
+        }
+
+        .search-input::placeholder {
+            color: var(--color-text-muted);
+        }
+
+        .subjects-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .subject-item {
+            padding: 12px 14px;
+            margin-bottom: 6px;
+            background: var(--color-bg-surface);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .subject-item:hover {
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        .subject-item.active {
+            background: var(--color-primary);
+            color: var(--color-bg-base);
+        }
+
+        .subject-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .subject-actions {
+            display: none;
+            gap: 6px;
+        }
+
+        .subject-item:hover .subject-actions,
+        .subject-item.active .subject-actions {
+            display: flex;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            opacity: 0.7;
+        }
+
+        .icon-btn:hover {
+            opacity: 1;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .add-subject-btn {
+            margin: 12px;
+            padding: 12px;
+            background: var(--color-primary);
+            border: none;
+            border-radius: 8px;
+            color: var(--color-bg-base);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .add-subject-btn:hover {
+            background: var(--color-primary-hover);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .breadcrumb {
+            padding: 20px 28px;
+            border-bottom: 1px solid var(--color-border);
+            background: var(--color-bg-elevated);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .breadcrumb-item {
+            color: var(--color-text-secondary);
+            font-size: 14px;
+        }
+
+        .breadcrumb-item.active {
+            color: var(--color-primary);
+            font-weight: 500;
+        }
+
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 28px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--color-text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-state h2 {
+            font-size: 20px;
+            margin-bottom: 8px;
+            color: var(--color-text-secondary);
+        }
+
+        .chapter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .chapter-card {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chapter-card:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.1);
+        }
+
+        .chapter-card h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .chapter-card p {
+            font-size: 13px;
+            color: var(--color-text-muted);
+        }
+
+        .folder-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .folder-item {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: 10px;
+            padding: 16px 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .folder-item:hover {
+            border-color: var(--color-primary);
+        }
+
+        .folder-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .folder-icon {
+            font-size: 24px;
+        }
+
+        .folder-details h3 {
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .folder-details p {
+            font-size: 13px;
+            color: var(--color-text-muted);
+        }
+
+        .folder-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: var(--color-bg-base);
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-hover);
+        }
+
+        .btn-secondary {
+            background: var(--color-bg-elevated);
+            color: var(--color-text-primary);
+            border: 1px solid var(--color-border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--color-bg-surface);
+        }
+
+        /* PDF Table */
+        .pdf-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--color-bg-elevated);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .pdf-table thead {
+            background: var(--color-bg-surface);
+        }
+
+        .pdf-table th {
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .pdf-table td {
+            padding: 16px;
+            border-top: 1px solid var(--color-border);
+            font-size: 14px;
+        }
+
+        .pdf-table tbody tr:hover {
+            background: rgba(56, 189, 248, 0.05);
+        }
+
+        .pdf-name {
+            font-weight: 500;
+            color: var(--color-text-primary);
+        }
+
+        .pdf-size, .pdf-date {
+            color: var(--color-text-muted);
+            font-size: 13px;
+        }
+
+        .pdf-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .pdf-actions .btn {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--color-bg-elevated);
+            border-radius: 16px;
+            padding: 28px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            margin-bottom: 24px;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .modal-header p {
+            font-size: 14px;
+            color: var(--color-text-muted);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="file"] {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--color-bg-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            color: var(--color-text-primary);
+            font-size: 14px;
+        }
+
+        .form-group input[type="file"] {
+            padding: 10px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 28px;
+        }
+
+        /* PDF Viewer Modal */
+        .pdf-viewer-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+        }
+
+        .pdf-viewer-modal.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pdf-viewer-header {
+            padding: 16px 24px;
+            background: var(--color-bg-elevated);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .pdf-viewer-title {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .pdf-viewer-content {
+            flex: 1;
+            overflow: auto;
+        }
+
+        .pdf-viewer-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .close-btn {
+            background: var(--color-danger);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .close-btn:hover {
+            background: #dc2626;
+        }
+
+        /* Study Timer */
+        .timer-widget {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            min-width: 280px;
+            z-index: 999;
+        }
+
+        .timer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .timer-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+        }
+
+        .timer-display {
+            font-size: 36px;
+            font-weight: 700;
+            text-align: center;
+            margin: 16px 0;
+            color: var(--color-primary);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .timer-info {
+            font-size: 12px;
+            color: var(--color-text-muted);
+            text-align: center;
+            margin-top: 12px;
+        }
+
+        .note-badge {
+            display: inline-block;
+            background: var(--color-primary);
+            color: var(--color-bg-base);
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-left: 8px;
+        }
+
+        .revision-badge {
+            display: inline-block;
+            background: var(--color-success);
+            color: white;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-left: 8px;
+        }
+
+        .revision-due {
+            background: var(--color-danger);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--color-bg-base);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--color-bg-surface);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 240px;
+            }
+
+            .chapter-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .content-area {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>📚 NEET/JEE Organizer</h1>
+                <p>Organize your study materials</p>
+            </div>
+
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search PDFs...">
+            </div>
+
+            <div class="subjects-list" id="subjectsList"></div>
+
+            <button class="add-subject-btn" id="addSubjectBtn">+ Add Subject</button>
+            
+            <div style="padding: 12px; border-top: 1px solid var(--color-border);">
+                <button class="btn btn-secondary" style="width: 100%; margin-bottom: 8px;" onclick="exportData()">💾 Export Backup</button>
+                <button class="btn btn-secondary" style="width: 100%;" onclick="document.getElementById('importFileInput').click()">📥 Import Backup</button>
+                <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="importData(event)">
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="breadcrumb" id="breadcrumb">
+                <span class="breadcrumb-item">Select a subject to start</span>
+            </div>
+
+            <div class="content-area" id="contentArea">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📖</div>
+                    <h2>Welcome to your PDF Organizer</h2>
+                    <p>Add a subject from the sidebar to get started</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Subject Modal -->
+    <div class="modal" id="addSubjectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Subject</h2>
+                <p>Enter the name of the subject</p>
+            </div>
+            <div class="form-group">
+                <label>Subject Name</label>
+                <input type="text" id="subjectNameInput" placeholder="e.g., Physics, Chemistry, Biology">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('addSubjectModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveSubject()">Add Subject</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Chapter Modal -->
+    <div class="modal" id="addChapterModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Chapter</h2>
+                <p>Enter the name of the chapter</p>
+            </div>
+            <div class="form-group">
+                <label>Chapter Name</label>
+                <input type="text" id="chapterNameInput" placeholder="e.g., Units and Measurements, Kinematics">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('addChapterModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveChapter()">Add Chapter</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Folder Modal -->
+    <div class="modal" id="addFolderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Folder</h2>
+                <p>Organize your PDFs into folders</p>
+            </div>
+            <div class="form-group">
+                <label>Folder Name</label>
+                <input type="text" id="folderNameInput" placeholder="e.g., Theory Notes, MCQ Bank, PYQ">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('addFolderModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveFolder()">Create Folder</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload PDF Modal -->
+    <div class="modal" id="uploadPdfModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Upload PDF</h2>
+                <p>Select a PDF file to upload</p>
+            </div>
+            <div class="form-group">
+                <label>Select PDF File</label>
+                <input type="file" id="pdfFileInput" accept=".pdf">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('uploadPdfModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="uploadPdf()">Upload</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF Viewer Modal -->
+    <div class="pdf-viewer-modal" id="pdfViewerModal">
+        <div class="pdf-viewer-header">
+            <div class="pdf-viewer-title" id="pdfViewerTitle">PDF Viewer</div>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn btn-primary" onclick="startStudySession()" id="startTimerBtn">⏱️ Start Timer</button>
+                <button class="close-btn" onclick="closePdfViewer()">Close</button>
+            </div>
+        </div>
+        <div class="pdf-viewer-content">
+            <iframe class="pdf-viewer-iframe" id="pdfViewerIframe"></iframe>
+        </div>
+    </div>
+
+    <!-- Study Timer Widget -->
+    <div class="timer-widget" id="timerWidget" style="display: none;">
+        <div class="timer-header">
+            <span class="timer-title">Study Session</span>
+            <button class="icon-btn" onclick="closeTimer()">✕</button>
+        </div>
+        <div class="timer-display" id="timerDisplay">00:00:00</div>
+        <div class="timer-controls">
+            <button class="btn btn-primary" style="flex: 1;" onclick="pauseTimer()" id="pauseBtn">⏸️ Pause</button>
+            <button class="btn btn-secondary" style="flex: 1;" onclick="stopTimer()">⏹️ Stop</button>
+        </div>
+        <div class="timer-info" id="timerInfo">Studying...</div>
+    </div>
+
+    <!-- PDF Notes Modal -->
+    <div class="modal" id="pdfNotesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>PDF Notes & Actions</h2>
+                <p id="notesModalPdfName"></p>
+            </div>
+            
+            <div class="form-group">
+                <label>Quick Notes</label>
+                <textarea id="pdfNoteInput" style="width: 100%; padding: 10px 14px; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 8px; color: var(--color-text-primary); font-size: 14px; min-height: 100px; font-family: inherit;"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Mark for Revision</label>
+                <button class="btn btn-primary" onclick="scheduleRevision()" style="width: 100%;">📅 Schedule Spaced Revision</button>
+                <p style="font-size: 12px; color: var(--color-text-muted); margin-top: 8px;">Auto-schedules: Day 1, 3, 7, 14, 30</p>
+            </div>
+
+            <div class="form-group">
+                <label>Study History</label>
+                <div id="studyHistoryList" style="max-height: 200px; overflow-y: auto;"></div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal('pdfNotesModal')">Close</button>
+                <button class="btn btn-primary" onclick="saveNote()">💾 Save Note</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // IndexedDB Setup
+        let db;
+        const DB_NAME = 'NEETJEEOrganizer';
+        const DB_VERSION = 1;
+
+        // Current navigation state
+        let currentView = { type: 'home' };
+        let currentSubject = null;
+        let currentChapter = null;
+        let currentFolder = null;
+
+        // Study timer state
+        let studyTimer = {
+            isRunning: false,
+            startTime: null,
+            elapsedSeconds: 0,
+            intervalId: null,
+            currentPdfId: null
+        };
+
+        // Initialize IndexedDB
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+
+                request.onupgradeneeded = (event) => {
+                    db = event.target.result;
+
+                    if (!db.objectStoreNames.contains('subjects')) {
+                        db.createObjectStore('subjects', { keyPath: 'id', autoIncrement: true });
+                    }
+
+                    if (!db.objectStoreNames.contains('chapters')) {
+                        const chapterStore = db.createObjectStore('chapters', { keyPath: 'id', autoIncrement: true });
+                        chapterStore.createIndex('subjectId', 'subjectId', { unique: false });
+                    }
+
+                    if (!db.objectStoreNames.contains('folders')) {
+                        const folderStore = db.createObjectStore('folders', { keyPath: 'id', autoIncrement: true });
+                        folderStore.createIndex('chapterId', 'chapterId', { unique: false });
+                    }
+
+                    if (!db.objectStoreNames.contains('pdfs')) {
+                        const pdfStore = db.createObjectStore('pdfs', { keyPath: 'id', autoIncrement: true });
+                        pdfStore.createIndex('folderId', 'folderId', { unique: false });
+                        pdfStore.createIndex('pdfId', 'id', { unique: false });
+                    }
+
+                    if (!db.objectStoreNames.contains('studySessions')) {
+                        const sessionStore = db.createObjectStore('studySessions', { keyPath: 'id', autoIncrement: true });
+                        sessionStore.createIndex('pdfId', 'pdfId', { unique: false });
+                        sessionStore.createIndex('date', 'date', { unique: false });
+                    }
+
+                    if (!db.objectStoreNames.contains('notes')) {
+                        const noteStore = db.createObjectStore('notes', { keyPath: 'id', autoIncrement: true });
+                        noteStore.createIndex('pdfId', 'pdfId', { unique: false });
+                    }
+
+                    if (!db.objectStoreNames.contains('revisions')) {
+                        const revisionStore = db.createObjectStore('revisions', { keyPath: 'id', autoIncrement: true });
+                        revisionStore.createIndex('pdfId', 'pdfId', { unique: false });
+                        revisionStore.createIndex('nextRevisionDate', 'nextRevisionDate', { unique: false });
+                    }
+                };
+            });
+        }
+
+        // Database operations
+        function addItem(storeName, item) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readwrite');
+                const store = transaction.objectStore(storeName);
+                const request = store.add(item);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function getAllItems(storeName) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readonly');
+                const store = transaction.objectStore(storeName);
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function getItemsByIndex(storeName, indexName, value) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readonly');
+                const store = transaction.objectStore(storeName);
+                const index = store.index(indexName);
+                const request = index.getAll(value);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function getItem(storeName, id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readonly');
+                const store = transaction.objectStore(storeName);
+                const request = store.get(id);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function updateItem(storeName, item) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readwrite');
+                const store = transaction.objectStore(storeName);
+                const request = store.put(item);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function deleteItem(storeName, id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readwrite');
+                const store = transaction.objectStore(storeName);
+                const request = store.delete(id);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // Load and display subjects
+        async function loadSubjects() {
+            const subjects = await getAllItems('subjects');
+            const subjectsList = document.getElementById('subjectsList');
+            subjectsList.innerHTML = '';
+
+            subjects.forEach(subject => {
+                const div = document.createElement('div');
+                div.className = 'subject-item';
+                div.innerHTML = `
+                    <span class="subject-name">${subject.name}</span>
+                    <div class="subject-actions">
+                        <button class="icon-btn" onclick="deleteSubject(${subject.id})" title="Delete">🗑️</button>
+                    </div>
+                `;
+                div.onclick = (e) => {
+                    if (!e.target.classList.contains('icon-btn')) {
+                        selectSubject(subject);
+                    }
+                };
+                subjectsList.appendChild(div);
+            });
+        }
+
+        // Select subject and show chapters
+        async function selectSubject(subject) {
+            currentSubject = subject;
+            currentChapter = null;
+            currentFolder = null;
+            currentView = { type: 'subject', subject };
+
+            document.querySelectorAll('.subject-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+
+            updateBreadcrumb();
+
+            const chapters = await getItemsByIndex('chapters', 'subjectId', subject.id);
+            const contentArea = document.getElementById('contentArea');
+
+            contentArea.innerHTML = `
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="openModal('addChapterModal')">+ Add Chapter</button>
+                </div>
+                <div class="chapter-grid" id="chapterGrid"></div>
+            `;
+
+            const chapterGrid = document.getElementById('chapterGrid');
+
+            if (chapters.length === 0) {
+                chapterGrid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📂</div>
+                        <h2>No chapters yet</h2>
+                        <p>Add your first chapter to organize PDFs</p>
+                    </div>
+                `;
+            } else {
+                chapters.forEach(chapter => {
+                    const card = document.createElement('div');
+                    card.className = 'chapter-card';
+                    card.innerHTML = `
+                        <h3>${chapter.name}</h3>
+                        <p>Click to view folders</p>
+                    `;
+                    card.onclick = () => selectChapter(chapter);
+                    chapterGrid.appendChild(card);
+                });
+            }
+        }
+
+        // Select chapter and show folders
+        async function selectChapter(chapter) {
+            currentChapter = chapter;
+            currentFolder = null;
+            currentView = { type: 'chapter', subject: currentSubject, chapter };
+
+            updateBreadcrumb();
+
+            const folders = await getItemsByIndex('folders', 'chapterId', chapter.id);
+            const contentArea = document.getElementById('contentArea');
+
+            contentArea.innerHTML = `
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="openModal('addFolderModal')">+ Create Folder</button>
+                </div>
+                <div class="folder-list" id="folderList"></div>
+            `;
+
+            const folderList = document.getElementById('folderList');
+
+            if (folders.length === 0) {
+                folderList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📁</div>
+                        <h2>No folders yet</h2>
+                        <p>Create folders to organize your PDFs</p>
+                    </div>
+                `;
+            } else {
+                folders.forEach(async folder => {
+                    const pdfs = await getItemsByIndex('pdfs', 'folderId', folder.id);
+                    const div = document.createElement('div');
+                    div.className = 'folder-item';
+                    div.innerHTML = `
+                        <div class="folder-info">
+                            <div class="folder-icon">📁</div>
+                            <div class="folder-details">
+                                <h3>${folder.name}</h3>
+                                <p>${pdfs.length} PDF${pdfs.length !== 1 ? 's' : ''}</p>
+                            </div>
+                        </div>
+                        <div class="folder-actions">
+                            <button class="icon-btn" onclick="deleteFolder(${folder.id})" title="Delete">🗑️</button>
+                        </div>
+                    `;
+                    div.onclick = (e) => {
+                        if (!e.target.classList.contains('icon-btn')) {
+                            selectFolder(folder);
+                        }
+                    };
+                    folderList.appendChild(div);
+                });
+            }
+        }
+
+        // Select folder and show PDFs
+        async function selectFolder(folder) {
+            currentFolder = folder;
+            currentView = { type: 'folder', subject: currentSubject, chapter: currentChapter, folder };
+
+            updateBreadcrumb();
+
+            const pdfs = await getItemsByIndex('pdfs', 'folderId', folder.id);
+            const contentArea = document.getElementById('contentArea');
+
+            contentArea.innerHTML = `
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="openModal('uploadPdfModal')">📤 Upload PDF</button>
+                </div>
+                <div id="pdfTableContainer"></div>
+            `;
+
+            const container = document.getElementById('pdfTableContainer');
+
+            if (pdfs.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📄</div>
+                        <h2>No PDFs yet</h2>
+                        <p>Upload your first PDF to this folder</p>
+                    </div>
+                `;
+            } else {
+                const table = document.createElement('table');
+                table.className = 'pdf-table';
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>File Name</th>
+                            <th>Size</th>
+                            <th>Upload Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pdfTableBody"></tbody>
+                `;
+                container.appendChild(table);
+
+                const tbody = document.getElementById('pdfTableBody');
+                pdfs.forEach(pdf => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="pdf-name">${pdf.name}</td>
+                        <td class="pdf-size">${formatFileSize(pdf.size)}</td>
+                        <td class="pdf-date">${new Date(pdf.uploadDate).toLocaleDateString()}</td>
+                        <td class="pdf-actions">
+                            <button class="btn btn-primary" onclick="viewPdf(${pdf.id})">👁️ View</button>
+                            <button class="btn btn-secondary" onclick="downloadPdf(${pdf.id})">⬇️ Download</button>
+                            <button class="btn btn-secondary" onclick="showPdfActions(${pdf.id})">📝 Notes</button>
+                            <button class="btn btn-secondary" onclick="deletePdf(${pdf.id})">🗑️ Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
+        // Update breadcrumb
+        function updateBreadcrumb() {
+            const breadcrumb = document.getElementById('breadcrumb');
+            let html = '';
+
+            if (currentView.type === 'subject') {
+                html = `
+                    <span class="breadcrumb-item active">${currentSubject.name}</span>
+                `;
+            } else if (currentView.type === 'chapter') {
+                html = `
+                    <span class="breadcrumb-item" style="cursor:pointer" onclick="selectSubject(currentSubject)">${currentSubject.name}</span>
+                    <span class="breadcrumb-item">›</span>
+                    <span class="breadcrumb-item active">${currentChapter.name}</span>
+                `;
+            } else if (currentView.type === 'folder') {
+                html = `
+                    <span class="breadcrumb-item" style="cursor:pointer" onclick="selectSubject(currentSubject)">${currentSubject.name}</span>
+                    <span class="breadcrumb-item">›</span>
+                    <span class="breadcrumb-item" style="cursor:pointer" onclick="selectChapter(currentChapter)">${currentChapter.name}</span>
+                    <span class="breadcrumb-item">›</span>
+                    <span class="breadcrumb-item active">${currentFolder.name}</span>
+                `;
+            } else {
+                html = '<span class="breadcrumb-item">Select a subject to start</span>';
+            }
+
+            breadcrumb.innerHTML = html;
+        }
+
+        // Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            // Clear inputs
+            const modal = document.getElementById(modalId);
+            const inputs = modal.querySelectorAll('input');
+            inputs.forEach(input => input.value = '');
+        }
+
+        // Save functions
+        async function saveSubject() {
+            const name = document.getElementById('subjectNameInput').value.trim();
+            if (!name) {
+                alert('Please enter a subject name');
+                return;
+            }
+
+            await addItem('subjects', { name, createdAt: Date.now() });
+            closeModal('addSubjectModal');
+            loadSubjects();
+        }
+
+        async function saveChapter() {
+            const name = document.getElementById('chapterNameInput').value.trim();
+            if (!name) {
+                alert('Please enter a chapter name');
+                return;
+            }
+
+            await addItem('chapters', {
+                name,
+                subjectId: currentSubject.id,
+                createdAt: Date.now()
+            });
+            closeModal('addChapterModal');
+            selectSubject(currentSubject);
+        }
+
+        async function saveFolder() {
+            const name = document.getElementById('folderNameInput').value.trim();
+            if (!name) {
+                alert('Please enter a folder name');
+                return;
+            }
+
+            await addItem('folders', {
+                name,
+                chapterId: currentChapter.id,
+                createdAt: Date.now()
+            });
+            closeModal('addFolderModal');
+            selectChapter(currentChapter);
+        }
+
+        async function uploadPdf() {
+            const fileInput = document.getElementById('pdfFileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a PDF file');
+                return;
+            }
+
+            if (file.type !== 'application/pdf') {
+                alert('Please select a valid PDF file');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const arrayBuffer = e.target.result;
+                await addItem('pdfs', {
+                    name: file.name,
+                    size: file.size,
+                    folderId: currentFolder.id,
+                    uploadDate: Date.now(),
+                    data: arrayBuffer
+                });
+
+                closeModal('uploadPdfModal');
+                selectFolder(currentFolder);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Delete functions
+        async function deleteSubject(id) {
+            if (!confirm('Delete this subject? All chapters, folders and PDFs will be deleted.')) {
+                return;
+            }
+
+            const chapters = await getItemsByIndex('chapters', 'subjectId', id);
+            for (const chapter of chapters) {
+                const folders = await getItemsByIndex('folders', 'chapterId', chapter.id);
+                for (const folder of folders) {
+                    const pdfs = await getItemsByIndex('pdfs', 'folderId', folder.id);
+                    for (const pdf of pdfs) {
+                        await deleteItem('pdfs', pdf.id);
+                    }
+                    await deleteItem('folders', folder.id);
+                }
+                await deleteItem('chapters', chapter.id);
+            }
+            await deleteItem('subjects', id);
+
+            loadSubjects();
+            document.getElementById('contentArea').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📖</div>
+                    <h2>Welcome to your PDF Organizer</h2>
+                    <p>Add a subject from the sidebar to get started</p>
+                </div>
+            `;
+        }
+
+        async function deleteFolder(id) {
+            if (!confirm('Delete this folder? All PDFs in it will be deleted.')) {
+                return;
+            }
+
+            const pdfs = await getItemsByIndex('pdfs', 'folderId', id);
+            for (const pdf of pdfs) {
+                await deleteItem('pdfs', pdf.id);
+            }
+            await deleteItem('folders', id);
+
+            selectChapter(currentChapter);
+        }
+
+        async function deletePdf(id) {
+            if (!confirm('Delete this PDF?')) {
+                return;
+            }
+
+            await deleteItem('pdfs', id);
+            selectFolder(currentFolder);
+        }
+
+        // View and download PDF
+        async function viewPdf(id) {
+            const pdf = await getItem('pdfs', id);
+            const blob = new Blob([pdf.data], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+
+            document.getElementById('pdfViewerTitle').textContent = pdf.name;
+            document.getElementById('pdfViewerIframe').src = url;
+            document.getElementById('pdfViewerModal').classList.add('active');
+            
+            studyTimer.currentPdfId = id;
+        }
+
+        function closePdfViewer() {
+            if (studyTimer.isRunning) {
+                if (!confirm('Study timer is running. Stop and save session?')) {
+                    return;
+                }
+                stopTimer();
+            }
+            
+            const iframe = document.getElementById('pdfViewerIframe');
+            URL.revokeObjectURL(iframe.src);
+            iframe.src = '';
+            document.getElementById('pdfViewerModal').classList.remove('active');
+            studyTimer.currentPdfId = null;
+        }
+
+        async function downloadPdf(id) {
+            const pdf = await getItem('pdfs', id);
+            const blob = new Blob([pdf.data], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = pdf.name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', async (e) => {
+            const query = e.target.value.toLowerCase().trim();
+
+            if (!query) {
+                if (currentSubject) {
+                    selectSubject(currentSubject);
+                }
+                return;
+            }
+
+            const allPdfs = await getAllItems('pdfs');
+            const matchingPdfs = [];
+
+            for (const pdf of allPdfs) {
+                const folder = await getItem('folders', pdf.folderId);
+                const chapter = await getItem('chapters', folder.chapterId);
+                const subject = await getItem('subjects', chapter.subjectId);
+
+                if (
+                    pdf.name.toLowerCase().includes(query) ||
+                    folder.name.toLowerCase().includes(query) ||
+                    chapter.name.toLowerCase().includes(query) ||
+                    subject.name.toLowerCase().includes(query)
+                ) {
+                    matchingPdfs.push({ pdf, folder, chapter, subject });
+                }
+            }
+
+            displaySearchResults(matchingPdfs);
+        });
+
+        function displaySearchResults(results) {
+            const contentArea = document.getElementById('contentArea');
+            const breadcrumb = document.getElementById('breadcrumb');
+
+            breadcrumb.innerHTML = '<span class="breadcrumb-item active">Search Results</span>';
+
+            if (results.length === 0) {
+                contentArea.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <h2>No results found</h2>
+                        <p>Try a different search term</p>
+                    </div>
+                `;
+                return;
+            }
+
+            contentArea.innerHTML = `
+                <h2 style="margin-bottom: 20px; font-size: 20px;">Found ${results.length} result${results.length !== 1 ? 's' : ''}</h2>
+                <table class="pdf-table">
+                    <thead>
+                        <tr>
+                            <th>File Name</th>
+                            <th>Location</th>
+                            <th>Size</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="searchResultsBody"></tbody>
+                </table>
+            `;
+
+            const tbody = document.getElementById('searchResultsBody');
+            results.forEach(({ pdf, folder, chapter, subject }) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="pdf-name">${pdf.name}</td>
+                    <td class="pdf-size">${subject.name} › ${chapter.name} › ${folder.name}</td>
+                    <td class="pdf-size">${formatFileSize(pdf.size)}</td>
+                    <td class="pdf-actions">
+                        <button class="btn btn-primary" onclick="viewPdf(${pdf.id})">👁️ View</button>
+                        <button class="btn btn-secondary" onclick="downloadPdf(${pdf.id})">⬇️ Download</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Utility function
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        // Event listeners
+        document.getElementById('addSubjectBtn').addEventListener('click', () => {
+            openModal('addSubjectModal');
+        });
+
+        // Export all data
+        async function exportData() {
+            try {
+                const subjects = await getAllItems('subjects');
+                const chapters = await getAllItems('chapters');
+                const folders = await getAllItems('folders');
+                const pdfs = await getAllItems('pdfs');
+
+                // Convert PDF ArrayBuffers to Base64 for JSON serialization
+                const pdfsWithBase64 = pdfs.map(pdf => ({
+                    ...pdf,
+                    data: arrayBufferToBase64(pdf.data)
+                }));
+
+                const backup = {
+                    version: 1,
+                    exportDate: new Date().toISOString(),
+                    subjects,
+                    chapters,
+                    folders,
+                    pdfs: pdfsWithBase64
+                };
+
+                const dataStr = JSON.stringify(backup, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `neet-jee-backup-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                alert('✅ Backup exported successfully! Upload this file to Google Drive for safekeeping.');
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('❌ Export failed: ' + error.message);
+            }
+        }
+
+        // Import data
+        async function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!confirm('⚠️ Import will replace ALL current data. Continue?')) {
+                event.target.value = '';
+                return;
+            }
+
+            try {
+                const text = await file.text();
+                const backup = JSON.parse(text);
+
+                // Validate backup structure
+                if (!backup.subjects || !backup.chapters || !backup.folders || !backup.pdfs) {
+                    throw new Error('Invalid backup file format');
+                }
+
+                // Clear existing data
+                const stores = ['subjects', 'chapters', 'folders', 'pdfs'];
+                for (const storeName of stores) {
+                    const items = await getAllItems(storeName);
+                    for (const item of items) {
+                        await deleteItem(storeName, item.id);
+                    }
+                }
+
+                // Import subjects
+                for (const subject of backup.subjects) {
+                    await addItem('subjects', subject);
+                }
+
+                // Import chapters
+                for (const chapter of backup.chapters) {
+                    await addItem('chapters', chapter);
+                }
+
+                // Import folders
+                for (const folder of backup.folders) {
+                    await addItem('folders', folder);
+                }
+
+                // Import PDFs (convert Base64 back to ArrayBuffer)
+                for (const pdf of backup.pdfs) {
+                    const pdfData = {
+                        ...pdf,
+                        data: base64ToArrayBuffer(pdf.data)
+                    };
+                    await addItem('pdfs', pdfData);
+                }
+
+                alert('✅ Import successful! ' + backup.pdfs.length + ' PDFs restored.');
+                
+                // Refresh UI
+                await loadSubjects();
+                document.getElementById('contentArea').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">✅</div>
+                        <h2>Data Restored Successfully</h2>
+                        <p>Select a subject from the sidebar to continue</p>
+                    </div>
+                `;
+                document.getElementById('breadcrumb').innerHTML = '<span class="breadcrumb-item">Select a subject to start</span>';
+                
+            } catch (error) {
+                console.error('Import error:', error);
+                alert('❌ Import failed: ' + error.message);
+            }
+
+            event.target.value = '';
+        }
+
+        // Utility functions for Base64 conversion
+        function arrayBufferToBase64(buffer) {
+            let binary = '';
+            const bytes = new Uint8Array(buffer);
+            const len = bytes.byteLength;
+            for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary);
+        }
+
+        function base64ToArrayBuffer(base64) {
+            const binaryString = atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        // Study Timer Functions
+        function startStudySession() {
+            if (!studyTimer.currentPdfId) {
+                alert('Please open a PDF first');
+                return;
+            }
+
+            studyTimer.isRunning = true;
+            studyTimer.startTime = Date.now() - (studyTimer.elapsedSeconds * 1000);
+            
+            document.getElementById('timerWidget').style.display = 'block';
+            document.getElementById('startTimerBtn').style.display = 'none';
+            
+            studyTimer.intervalId = setInterval(updateTimerDisplay, 1000);
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            if (studyTimer.isRunning) {
+                studyTimer.elapsedSeconds = Math.floor((Date.now() - studyTimer.startTime) / 1000);
+            }
+            
+            const hours = Math.floor(studyTimer.elapsedSeconds / 3600);
+            const minutes = Math.floor((studyTimer.elapsedSeconds % 3600) / 60);
+            const seconds = studyTimer.elapsedSeconds % 60;
+            
+            const display = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            document.getElementById('timerDisplay').textContent = display;
+        }
+
+        function pauseTimer() {
+            const pauseBtn = document.getElementById('pauseBtn');
+            
+            if (studyTimer.isRunning) {
+                studyTimer.isRunning = false;
+                clearInterval(studyTimer.intervalId);
+                pauseBtn.innerHTML = '▶️ Resume';
+                document.getElementById('timerInfo').textContent = 'Paused';
+            } else {
+                studyTimer.isRunning = true;
+                studyTimer.startTime = Date.now() - (studyTimer.elapsedSeconds * 1000);
+                studyTimer.intervalId = setInterval(updateTimerDisplay, 1000);
+                pauseBtn.innerHTML = '⏸️ Pause';
+                document.getElementById('timerInfo').textContent = 'Studying...';
+            }
+        }
+
+        async function stopTimer() {
+            if (studyTimer.elapsedSeconds === 0) {
+                closeTimer();
+                return;
+            }
+
+            clearInterval(studyTimer.intervalId);
+            
+            const session = {
+                pdfId: studyTimer.currentPdfId,
+                duration: studyTimer.elapsedSeconds,
+                date: new Date().toISOString(),
+                timestamp: Date.now()
+            };
+            
+            await addItem('studySessions', session);
+            
+            const minutes = Math.floor(studyTimer.elapsedSeconds / 60);
+            alert(`✅ Study session saved!\nDuration: ${minutes} minutes`);
+            
+            closeTimer();
+        }
+
+        function closeTimer() {
+            clearInterval(studyTimer.intervalId);
+            studyTimer.isRunning = false;
+            studyTimer.elapsedSeconds = 0;
+            studyTimer.startTime = null;
+            document.getElementById('timerWidget').style.display = 'none';
+            document.getElementById('startTimerBtn').style.display = 'block';
+            document.getElementById('pauseBtn').innerHTML = '⏸️ Pause';
+            document.getElementById('timerInfo').textContent = 'Studying...';
+        }
+
+        // Notes and Revision Functions
+        async function showPdfActions(pdfId) {
+            const pdf = await getItem('pdfs', pdfId);
+            document.getElementById('notesModalPdfName').textContent = pdf.name;
+            
+            const notes = await getItemsByIndex('notes', 'pdfId', pdfId);
+            if (notes.length > 0) {
+                document.getElementById('pdfNoteInput').value = notes[0].content;
+            } else {
+                document.getElementById('pdfNoteInput').value = '';
+            }
+            
+            const sessions = await getItemsByIndex('studySessions', 'pdfId', pdfId);
+            const historyList = document.getElementById('studyHistoryList');
+            
+            if (sessions.length === 0) {
+                historyList.innerHTML = '<p style="color: var(--color-text-muted); font-size: 13px;">No study sessions yet</p>';
+            } else {
+                const totalMinutes = sessions.reduce((sum, s) => sum + Math.floor(s.duration / 60), 0);
+                historyList.innerHTML = `
+                    <p style="font-size: 13px; margin-bottom: 12px;"><strong>Total Study Time:</strong> ${totalMinutes} minutes (${sessions.length} sessions)</p>
+                    ${sessions.slice(-5).reverse().map(s => `
+                        <div style="padding: 8px; background: var(--color-bg-surface); border-radius: 6px; margin-bottom: 6px; font-size: 12px;">
+                            📅 ${new Date(s.date).toLocaleDateString()} - ${Math.floor(s.duration / 60)} min
+                        </div>
+                    `).join('')}
+                `;
+            }
+            
+            studyTimer.currentPdfId = pdfId;
+            openModal('pdfNotesModal');
+        }
+
+        async function saveNote() {
+            const content = document.getElementById('pdfNoteInput').value.trim();
+            const pdfId = studyTimer.currentPdfId;
+            
+            if (!content) {
+                alert('Please enter a note');
+                return;
+            }
+            
+            const existingNotes = await getItemsByIndex('notes', 'pdfId', pdfId);
+            
+            if (existingNotes.length > 0) {
+                const note = existingNotes[0];
+                note.content = content;
+                note.updatedAt = Date.now();
+                await updateItem('notes', note);
+            } else {
+                await addItem('notes', {
+                    pdfId,
+                    content,
+                    createdAt: Date.now(),
+                    updatedAt: Date.now()
+                });
+            }
+            
+            alert('✅ Note saved successfully!');
+            closeModal('pdfNotesModal');
+        }
+
+        async function scheduleRevision() {
+            const pdfId = studyTimer.currentPdfId;
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const revisionDays = [1, 3, 7, 14, 30];
+            
+            for (const days of revisionDays) {
+                const revisionDate = new Date(today);
+                revisionDate.setDate(revisionDate.getDate() + days);
+                
+                await addItem('revisions', {
+                    pdfId,
+                    scheduledDate: today.getTime(),
+                    nextRevisionDate: revisionDate.getTime(),
+                    daysInterval: days,
+                    completed: false,
+                    createdAt: Date.now()
+                });
+            }
+            
+            alert('✅ Spaced revision scheduled!\nReview dates: Day 1, 3, 7, 14, 30');
+        }
+            const content = document.getElementById('pdfNoteInput').value.trim();
+            if (!content) {
+                alert('Please enter a note');
+                return;
+            }
+
+            const existingNotes = await getItemsByIndex('notes', 'pdfId', studyTimer.currentPdfId);
+            
+            if (existingNotes.length > 0) {
+                existingNotes[0].content = content;
+                existingNotes[0].updatedAt = Date.now();
+                await updateItem('notes', existingNotes[0]);
+            } else {
+                await addItem('notes', {
+                    pdfId: studyTimer.currentPdfId,
+                    content,
+                    createdAt: Date.now()
+                });
+            }
+
+            alert('✅ Note saved successfully!');
+            closeModal('pdfNotesModal');
+        }
+
+        async function scheduleRevision() {
+            const existingRevisions = await getItemsByIndex('revisions', 'pdfId', studyTimer.currentPdfId);
+            
+            if (existingRevisions.length > 0) {
+                alert('⚠️ Revision already scheduled for this PDF');
+                return;
+            }
+
+            const revisionSchedule = [1, 3, 7, 14, 30];
+            const now = Date.now();
+            
+            for (const days of revisionSchedule) {
+                await addItem('revisions', {
+                    pdfId: studyTimer.currentPdfId,
+                    nextRevisionDate: now + (days * 24 * 60 * 60 * 1000),
+                    dayNumber: days,
+                    completed: false,
+                    createdAt: now
+                });
+            }
+
+            alert('✅ Spaced revision scheduled!\nYou will revise on: Day 1, 3, 7, 14, 30');
+            closeModal('pdfNotesModal');
+        }
+
+        // Initialize app
+        async function init() {
+            await initDB();
+            await loadSubjects();
+        }
+
+        init();
+    </script>
+</body>
+</html>
+
